@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bộ thủ thông dụng khác</title>
+<style>
+:root{
+  --paper:#faf6ef; --ink:#2b2620; --muted:#8a7d6c;
+  --line:#e8dcc8; --accent:#7a4a2a; --accent-soft:#f0e2d0;
+  --cjk:"Noto Serif CJK SC","Songti SC","PingFang SC","Microsoft YaHei",serif;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+     background:var(--paper);color:var(--ink);line-height:1.5}
+main{max-width:640px;margin:0 auto;padding:24px 18px 56px}
+h1{font-size:.9rem;font-weight:600;margin:0 0 16px;text-align:center;
+   color:var(--muted);letter-spacing:.14em;text-transform:uppercase}
+
+.stage{background:#fff;border-radius:26px;padding:12px;
+       border:1.5px solid var(--line);overflow:hidden;
+       box-shadow:0 8px 32px rgba(122,74,42,.08)}
+svg#fig{width:100%;height:auto;display:block}
+
+.tile{cursor:pointer;outline:none;transition:transform .18s}
+.tile-bg{fill:#fdfaf5;stroke:var(--line);stroke-width:1.5;
+         transition:fill .2s,stroke .2s,stroke-width .2s}
+.tile:hover .tile-bg{fill:#f5e8d8;stroke:#d4b898}
+.tile.sel .tile-bg{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2.5}
+.tile-glyph{font-family:var(--cjk);font-size:22px;fill:var(--ink);
+            transition:fill .2s}
+.tile.sel .tile-glyph{fill:var(--accent)}
+.tile:focus-visible .tile-bg{stroke-width:3}
+
+.card{background:#fff;border-radius:26px;border:1.5px solid var(--line);
+      padding:28px 20px 26px;margin-top:14px;text-align:center;min-height:280px;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      box-shadow:0 8px 32px rgba(122,74,42,.08)}
+.card .icon{font-size:76px;line-height:1;margin-bottom:12px;
+             filter:drop-shadow(0 4px 10px rgba(0,0,0,.12))}
+.card .glyph{font-family:var(--cjk);font-size:62px;line-height:1;
+             color:var(--accent);margin-bottom:4px}
+.card .variant{font-family:var(--cjk);font-size:.95rem;color:var(--muted);
+               margin-bottom:6px}
+.card .pron{font-size:1.3rem;margin:0 0 2px;letter-spacing:.02em}
+.card .pron .hv{color:var(--muted);margin-left:8px;font-size:1rem;letter-spacing:0}
+.card .meaning{font-size:1.3rem;font-weight:600;margin:0 0 20px;
+               color:var(--accent)}
+.card .examples{display:flex;gap:18px;justify-content:center;flex-wrap:wrap}
+.card .ex{display:flex;flex-direction:column;align-items:center;gap:1px;
+          padding:8px 12px;border-radius:12px;background:#fdfaf5;
+          border:1px solid var(--line);min-width:60px}
+.card .ex .c{font-family:var(--cjk);font-size:26px;line-height:1.15}
+.card .ex .hv{font-size:.7rem;color:var(--muted)}
+.card .ex .m{font-size:.78rem}
+.card .hint{color:var(--muted);font-size:1.1rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>Bộ thủ thông dụng khác</h1>
+
+  <section class="stage">
+    <svg id="fig" viewBox="0 0 508 295" role="img" aria-label="Lưới 18 bộ thủ thông dụng">
+      <g id="tiles"></g>
+    </svg>
+  </section>
+
+  <section class="card" id="card"></section>
+</main>
+
+<script>
+const NS = "http://www.w3.org/2000/svg";
+
+/* ==== 18 bộ thủ thông dụng (giản thể) ==== */
+const RADICALS = {
+  da:    {glyph:"大", variant:"",   pinyin:"dà",   hv:"đại",   meaning:"lớn",        icon:"🙆",
+          ex:[{c:"天",hv:"thiên",m:"trời"},{c:"太",hv:"thái",m:"quá"},{c:"夫",hv:"phu",m:"chồng"}]},
+  xiao:  {glyph:"小", variant:"",   pinyin:"xiǎo", hv:"tiểu",  meaning:"nhỏ",        icon:"🤏",
+          ex:[{c:"少",hv:"thiểu",m:"ít"},{c:"尖",hv:"tiêm",m:"nhọn"},{c:"尘",hv:"trần",m:"bụi"}]},
+  ba:    {glyph:"八", variant:"",   pinyin:"bā",   hv:"bát",   meaning:"tám, chia ra",icon:"8️⃣",
+          ex:[{c:"分",hv:"phân",m:"chia"},{c:"公",hv:"công",m:"chung"},{c:"六",hv:"lục",m:"sáu"}]},
+  shi:   {glyph:"十", variant:"",   pinyin:"shí",  hv:"thập",  meaning:"mười",       icon:"🔟",
+          ex:[{c:"千",hv:"thiên",m:"nghìn"},{c:"古",hv:"cổ",m:"xưa"},{c:"早",hv:"tảo",m:"sớm"}]},
+  wang:  {glyph:"王", variant:"",   pinyin:"yù",   hv:"ngọc",  meaning:"ngọc, vua",  icon:"👑",
+          ex:[{c:"玩",hv:"ngoạn",m:"chơi"},{c:"玉",hv:"ngọc",m:"ngọc"},{c:"珠",hv:"châu",m:"ngọc trai"}]},
+  bei:   {glyph:"贝", variant:"",   pinyin:"bèi",  hv:"bối",   meaning:"tiền bạc",   icon:"🐚",
+          ex:[{c:"买",hv:"mãi",m:"mua"},{c:"贵",hv:"quý",m:"đắt"},{c:"财",hv:"tài",m:"của cải"}]},
+  mi:    {glyph:"米", variant:"",   pinyin:"mǐ",   hv:"mễ",    meaning:"gạo",        icon:"🍚",
+          ex:[{c:"粉",hv:"phấn",m:"bột"},{c:"糖",hv:"đường",m:"đường"},{c:"粥",hv:"chúc",m:"cháo"}]},
+  mi2:   {glyph:"糸", variant:"纟", pinyin:"mì",   hv:"mịch",  meaning:"tơ, sợi",    icon:"🧵",
+          ex:[{c:"红",hv:"hồng",m:"đỏ"},{c:"纸",hv:"chỉ",m:"giấy"},{c:"绿",hv:"lục",m:"xanh"}]},
+  che:   {glyph:"车", variant:"",   pinyin:"chē",  hv:"xa",    meaning:"xe",         icon:"🚗",
+          ex:[{c:"轻",hv:"khinh",m:"nhẹ"},{c:"轮",hv:"luân",m:"bánh xe"},{c:"输",hv:"thâu",m:"thua"}]},
+  tian:  {glyph:"田", variant:"",   pinyin:"tián", hv:"điền",  meaning:"ruộng",      icon:"🌾",
+          ex:[{c:"男",hv:"nam",m:"nam"},{c:"界",hv:"giới",m:"giới"},{c:"苗",hv:"miêu",m:"mầm"}]},
+  yu:    {glyph:"雨", variant:"",   pinyin:"yǔ",   hv:"vũ",    meaning:"mưa",        icon:"🌧️",
+          ex:[{c:"雪",hv:"tuyết",m:"tuyết"},{c:"雷",hv:"lôi",m:"sấm"},{c:"零",hv:"linh",m:"số không"}]},
+  feng:  {glyph:"风", variant:"",   pinyin:"fēng", hv:"phong", meaning:"gió",        icon:"🌬️",
+          ex:[{c:"飘",hv:"phiêu",m:"bay"},{c:"疯",hv:"phong",m:"điên"},{c:"讽",hv:"phúng",m:"châm biếm"}]},
+  shi2:  {glyph:"食", variant:"饣", pinyin:"shí",  hv:"thực",  meaning:"ăn uống",    icon:"🍜",
+          ex:[{c:"饭",hv:"phạn",m:"cơm"},{c:"饮",hv:"ẩm",m:"uống"},{c:"饱",hv:"bão",m:"no"}]},
+  ne:    {glyph:"疒", variant:"",   pinyin:"nè",   hv:"nạch",  meaning:"bệnh tật",   icon:"🤒",
+          ex:[{c:"病",hv:"bệnh",m:"bệnh"},{c:"疼",hv:"đông",m:"đau"},{c:"痛",hv:"thống",m:"đau"}]},
+  pi:    {glyph:"疋", variant:"",   pinyin:"pǐ",   hv:"sơ",    meaning:"chân, đơn vị",icon:"🦶",
+          ex:[{c:"蛋",hv:"đản",m:"trứng"},{c:"疑",hv:"nghi",m:"nghi ngờ"},{c:"楚",hv:"sở",m:"Sở"}]},
+  ye:    {glyph:"页", variant:"",   pinyin:"yè",   hv:"hiệt",  meaning:"đầu, trang", icon:"📄",
+          ex:[{c:"题",hv:"đề",m:"đề bài"},{c:"顶",hv:"đỉnh",m:"đỉnh"},{c:"顾",hv:"cố",m:"ngoảnh"}]},
+  jian:  {glyph:"见", variant:"",   pinyin:"jiàn", hv:"kiến",  meaning:"nhìn thấy",  icon:"👀",
+          ex:[{c:"观",hv:"quan",m:"xem"},{c:"觉",hv:"giác",m:"cảm"},{c:"规",hv:"quy",m:"quy tắc"}]},
+  hei:   {glyph:"黑", variant:"",   pinyin:"hēi",  hv:"hắc",   meaning:"màu đen",    icon:"⬛",
+          ex:[{c:"默",hv:"mặc",m:"lặng"},{c:"点",hv:"điểm",m:"chấm"},{c:"墨",hv:"mặc",m:"mực"}]}
+};
+
+/* ==== thứ tự 18 ô, 6 cột x 3 hàng ==== */
+const ORDER = [
+  "da","xiao","ba","shi","wang","bei",
+  "mi","mi2","che","tian","yu","feng",
+  "shi2","ne","pi","ye","jian","hei"
+];
+
+/* ==== minh họa nhỏ cho từng ô (vẽ quanh tâm 0,0) ==== */
+const ARTS = {
+  da: `
+    <circle cx="0" cy="-9" r="5.5" fill="#efc8a6"/>
+    <line x1="0" y1="-3" x2="0" y2="8" stroke="#8fa99e" stroke-width="4.5" stroke-linecap="round"/>
+    <line x1="-13" y1="0" x2="13" y2="0" stroke="#efc8a6" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="0" y1="8" x2="-7" y2="17" stroke="#3a5a8a" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="0" y1="8" x2="7" y2="17" stroke="#3a5a8a" stroke-width="3.5" stroke-linecap="round"/>`,
+  xiao: `
+    <circle cx="0" cy="-9" r="4" fill="#efc8a6"/>
+    <line x1="0" y1="-5" x2="0" y2="5" stroke="#8fa99e" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="-6" y1="-2" x2="6" y2="-2" stroke="#efc8a6" stroke-width="2.2" stroke-linecap="round"/>
+    <line x1="0" y1="5" x2="-4" y2="11" stroke="#3a5a8a" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="0" y1="5" x2="4" y2="11" stroke="#3a5a8a" stroke-width="2.5" stroke-linecap="round"/>`,
+  ba: `
+    <path d="M-14 -12 L-4 14" stroke="#2a6b8a" stroke-width="4" stroke-linecap="round"/>
+    <path d="M14 -12 L4 14" stroke="#2a6b8a" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="0" cy="2" r="2.8" fill="#ffcb47"/>`,
+  shi: `
+    <line x1="0" y1="-18" x2="0" y2="18" stroke="#b88a4a" stroke-width="4" stroke-linecap="round"/>
+    <line x1="-18" y1="0" x2="18" y2="0" stroke="#b88a4a" stroke-width="4" stroke-linecap="round"/>`,
+  wang: `
+    <polygon points="-15,15 -11,-8 0,4 11,-8 15,15" fill="#ffd23f" stroke="#b88000" stroke-width="1.5" stroke-linejoin="round"/>
+    <circle cx="0" cy="8" r="2.8" fill="#e03030"/>
+    <circle cx="-6" cy="11" r="1.5" fill="#fff" opacity="0.6"/>
+    <circle cx="6" cy="11" r="1.5" fill="#fff" opacity="0.6"/>`,
+  bei: `
+    <path d="M-13 2 Q-13 -15 0 -17 Q13 -15 13 2 Q13 15 0 15 Q-13 15 -13 2 Z"
+          fill="#f5c89a" stroke="#c08a5a" stroke-width="1.5"/>
+    <line x1="0" y1="-15" x2="0" y2="13" stroke="#c08a5a" stroke-width="0.9"/>
+    <line x1="-6" y1="-12" x2="-6" y2="13" stroke="#c08a5a" stroke-width="0.7"/>
+    <line x1="6" y1="-12" x2="6" y2="13" stroke="#c08a5a" stroke-width="0.7"/>`,
+  mi: `
+    <ellipse cx="-5" cy="-6" rx="3" ry="6" fill="#fffbe0" stroke="#c0a070" stroke-width="1" transform="rotate(-20 -5 -6)"/>
+    <ellipse cx="6" cy="-4" rx="3" ry="6" fill="#fffbe0" stroke="#c0a070" stroke-width="1" transform="rotate(15 6 -4)"/>
+    <ellipse cx="-3" cy="6" rx="3" ry="6" fill="#fffbe0" stroke="#c0a070" stroke-width="1" transform="rotate(5 -3 6)"/>
+    <ellipse cx="7" cy="8" rx="3" ry="6" fill="#fffbe0" stroke="#c0a070" stroke-width="1" transform="rotate(-25 7 8)"/>`,
+  mi2: `
+    <circle cx="0" cy="0" r="16" fill="none" stroke="#e88a3a" stroke-width="2.5"/>
+    <circle cx="0" cy="0" r="11" fill="none" stroke="#e88a3a" stroke-width="2.5"/>
+    <circle cx="0" cy="0" r="6" fill="none" stroke="#e88a3a" stroke-width="2.5"/>
+    <circle cx="0" cy="0" r="2" fill="#e88a3a"/>`,
+  che: `
+    <rect x="-20" y="-5" width="40" height="15" rx="4" fill="#5a9ae0"/>
+    <path d="M-12 -5 L-8 -13 L8 -13 L12 -5 Z" fill="#7ab0f0"/>
+    <circle cx="-10" cy="12" r="4.5" fill="#2a2a2a"/>
+    <circle cx="10" cy="12" r="4.5" fill="#2a2a2a"/>
+    <circle cx="-10" cy="12" r="1.8" fill="#888"/>
+    <circle cx="10" cy="12" r="1.8" fill="#888"/>
+    <rect x="5" y="-11" width="6" height="5" fill="#a8d4e8"/>
+    <rect x="-7" y="-11" width="6" height="5" fill="#a8d4e8"/>`,
+  tian: `
+    <rect x="-16" y="-16" width="32" height="32" fill="#9bc47a" stroke="#5a3a20" stroke-width="2"/>
+    <line x1="0" y1="-16" x2="0" y2="16" stroke="#5a3a20" stroke-width="2"/>
+    <line x1="-16" y1="0" x2="16" y2="0" stroke="#5a3a20" stroke-width="2"/>
+    <line x1="-8" y1="-8" x2="-8" y2="-4" stroke="#3a7a3a" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="8" y1="-8" x2="8" y2="-4" stroke="#3a7a3a" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="-8" y1="8" x2="-8" y2="12" stroke="#3a7a3a" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="8" y1="8" x2="8" y2="12" stroke="#3a7a3a" stroke-width="1.5" stroke-linecap="round"/>`,
+  yu: `
+    <path d="M-14 -8 Q-14 -16 -6 -16 Q-2 -20 4 -18 Q12 -20 14 -12 Q20 -12 18 -6 Q18 -2 12 -2 L-12 -2 Q-16 -2 -16 -6 Z"
+          fill="#b0b0b0"/>
+    <line x1="-10" y1="4" x2="-12" y2="14" stroke="#5a9ae0" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="-3" y1="4" x2="-5" y2="14" stroke="#5a9ae0" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="4" y1="4" x2="2" y2="14" stroke="#5a9ae0" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="11" y1="4" x2="9" y2="14" stroke="#5a9ae0" stroke-width="2.5" stroke-linecap="round"/>`,
+  feng: `
+    <path d="M-16 -8 Q-6 -14 4 -8 Q10 -4 8 0 Q6 4 0 2"
+          stroke="#5a9ae0" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M-16 4 Q-4 0 8 4 Q16 6 16 10 Q14 14 8 12"
+          stroke="#5a9ae0" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M-16 12 Q-6 10 4 12 Q10 14 8 16"
+          stroke="#5a9ae0" stroke-width="2.5" fill="none" stroke-linecap="round"/>`,
+  shi2: `
+    <path d="M-16 2 Q-16 16 0 16 Q16 16 16 2 Z"
+          fill="#fff8e8" stroke="#8a5a30" stroke-width="1.5"/>
+    <ellipse cx="0" cy="2" rx="16" ry="3" fill="#e8c8a0" stroke="#8a5a30" stroke-width="1"/>
+    <path d="M-12 -2 Q-8 -8 0 -10 Q8 -8 12 -2" fill="#fffbe0" stroke="#c0a070" stroke-width="1"/>
+    <ellipse cx="-4" cy="-6" rx="3" ry="1.5" fill="#fff" transform="rotate(-15 -4 -6)"/>
+    <ellipse cx="4" cy="-8" rx="3" ry="1.5" fill="#fff" transform="rotate(20 4 -8)"/>`,
+  ne: `
+    <line x1="-20" y1="12" x2="20" y2="12" stroke="#5a3a20" stroke-width="2.5"/>
+    <line x1="-18" y1="12" x2="-18" y2="18" stroke="#5a3a20" stroke-width="2"/>
+    <line x1="18" y1="12" x2="18" y2="18" stroke="#5a3a20" stroke-width="2"/>
+    <ellipse cx="4" cy="6" rx="12" ry="4" fill="#5a9ae0"/>
+    <circle cx="-12" cy="2" r="5" fill="#efc8a6"/>
+    <circle cx="-14" cy="1" r="1" fill="#2b2620"/>
+    <path d="M-14 6 Q-12 7 -10 6" stroke="#a5664a" stroke-width="1" fill="none"/>
+    <line x1="-8" y1="-12" x2="-8" y2="-8" stroke="#a63a2a" stroke-width="1.5"/>
+    <circle cx="-8" cy="-6" r="1.5" fill="#a63a2a"/>`,
+  pi: `
+    <ellipse cx="-2" cy="2" rx="9" ry="13" fill="#efc8a6" stroke="#c08a5a" stroke-width="1"/>
+    <circle cx="-8" cy="-14" r="2.5" fill="#efc8a6" stroke="#c08a5a" stroke-width="0.8"/>
+    <circle cx="-2" cy="-16" r="2.5" fill="#efc8a6" stroke="#c08a5a" stroke-width="0.8"/>
+    <circle cx="5" cy="-15" r="2.5" fill="#efc8a6" stroke="#c08a5a" stroke-width="0.8"/>
+    <circle cx="11" cy="-12" r="2" fill="#efc8a6" stroke="#c08a5a" stroke-width="0.8"/>`,
+  ye: `
+    <path d="M-12 18 L-12 4 Q-14 -12 0 -14 Q14 -14 14 0 Q14 8 6 10 L6 18 Z"
+          fill="#efc8a6" stroke="#c08a5a" stroke-width="1.2"/>
+    <circle cx="6" cy="-2" r="1.5" fill="#2b2620"/>
+    <path d="M8 6 Q10 8 8 10" stroke="#c08a5a" stroke-width="1" fill="none"/>
+    <path d="M-10 2 Q-6 -4 0 -6" stroke="#a5664a" stroke-width="1" fill="none" opacity="0.5"/>`,
+  jian: `
+    <path d="M-18 0 Q0 -16 18 0 Q0 16 -18 0 Z"
+          fill="#fff" stroke="#2a6b8a" stroke-width="2"/>
+    <circle cx="0" cy="0" r="8" fill="#5a9ae0"/>
+    <circle cx="0" cy="0" r="4" fill="#2a2a2a"/>
+    <circle cx="2" cy="-2" r="1.5" fill="#fff"/>`,
+  hei: `
+    <path d="M0 -18 Q-14 0 -14 8 Q-14 18 0 18 Q14 18 14 8 Q14 0 0 -18 Z"
+          fill="#2a2a2a"/>
+    <circle cx="-6" cy="4" r="2.5" fill="#666"/>
+    <circle cx="6" cy="9" r="1.5" fill="#666"/>`
+};
+
+/* ==== layout ==== */
+const COL_X = [5, 88, 171, 254, 337, 420];
+const ROW_Y = [5, 100, 195];
+const CELL_W = 78, CELL_H = 90;
+
+const tilesBox = document.getElementById("tiles");
+const panel = document.getElementById("card");
+
+ORDER.forEach((id, i) => {
+  const col = i % 6;
+  const row = Math.floor(i / 6);
+  const x = COL_X[col];
+  const y = ROW_Y[row];
+  const r = RADICALS[id];
+
+  const g = document.createElementNS(NS,"g");
+  g.setAttribute("class","tile");
+  g.setAttribute("tabindex","0");
+  g.setAttribute("role","button");
+  g.setAttribute("aria-label", r.pinyin + " " + r.hv + " " + r.meaning);
+  g.dataset.id = id;
+
+  g.innerHTML = `
+    <rect class="tile-bg" x="${x}" y="${y}" width="${CELL_W}" height="${CELL_H}" rx="12"/>
+    <g transform="translate(${x + CELL_W/2}, ${y + 34})">${ARTS[id]}</g>
+    <text class="tile-glyph" x="${x + CELL_W/2}" y="${y + 82}" text-anchor="middle">${r.glyph}</text>`;
+
+  g.addEventListener("click", () => select(id));
+  g.addEventListener("keydown", e => {
+    if(e.key==="Enter" || e.key===" "){ e.preventDefault(); select(id); }
+  });
+
+  tilesBox.appendChild(g);
+});
+
+function select(id){
+  document.querySelectorAll(".tile").forEach(el =>
+    el.classList.toggle("sel", el.dataset.id === id));
+  renderCard(id);
+}
+
+function renderCard(id){
+  const r = RADICALS[id];
+  panel.innerHTML = `
+    <div class="icon">${r.icon}</div>
+    <div class="glyph">${r.glyph}</div>
+    ${r.variant ? `<div class="variant">biến thể: ${r.variant}</div>` : ""}
+    <p class="pron">${r.pinyin}<span class="hv">· ${r.hv}</span></p>
+    <p class="meaning">${r.meaning}</p>
+    <div class="examples">
+      ${r.ex.map(x => `
+        <div class="ex">
+          <span class="c">${x.c}</span>
+          <span class="hv">${x.hv}</span>
+          <span class="m">${x.m}</span>
+        </div>`).join("")}
+    </div>`;
+}
+
+panel.innerHTML = `<p class="hint">👆 Chạm vào một ô</p>`;
+</script>
+</body>
+</html>
